@@ -1,0 +1,1 @@
+# Função para enviar e-mail via SMTP

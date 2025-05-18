@@ -1,0 +1,1 @@
+# Script para adicionar usuário com senha temporária e envio de e-mail

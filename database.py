@@ -17,9 +17,9 @@ def criar_tabelas():
         nome TEXT,
         email TEXT UNIQUE,
         senha_hash TEXT,
-        tipo TEXT,  -- 'admin' ou 'usuario'
-        regiao TEXT,  -- 'MT' ou 'BA'
-        senha_temporaria INTEGER  -- 1 se temporária, 0 se definitiva
+        tipo TEXT,
+        regiao TEXT,
+        senha_temporaria INTEGER
     )
     """)
 

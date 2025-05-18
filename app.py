@@ -71,8 +71,8 @@ if opcao == "Processar PDF":
             st.success(f"[{uploaded_file.name}] {len(df)} fardos processados com sucesso!")
             st.dataframe(df)
 
-            formatacao_id = inserir_formatacao(numero_lote, data_hvi, safra, produtor_input)
-            inserir_fardos(formatacao_id, df)
+            formatacao_id = inserir_formatacao(numero_lote, data_hvi, safra, produtor_input, st.session_state["usuario_id"])
+
 
             df_consolidado = pd.concat([df_consolidado, df], ignore_index=True)
 

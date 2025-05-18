@@ -4,3 +4,4 @@ pandas
 openpyxl
 bcrypt
 python-dotenv
+streamlit-cookies-manager

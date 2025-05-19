@@ -160,6 +160,9 @@ if opcao == "Processar PDF":
         df_final["Tipo"] = ""
         df_final["Produtor"] = produtor
 
+        # ✅ CORREÇÃO APLICADA AQUI
+        df_final["FardoID"] = df_final["FardoID"].str.replace(".", "", regex=False)
+
         export = df_final[["Lote","FardoID","MIC","UHML","STR","PESO","SFI","UI","CSP","ELG","Rd","+b","TrID","SCI","MAT","CG","Produtor","Tipo"]]
         buffer = BytesIO()
         export.to_excel(buffer, index=False, engine="openpyxl")
@@ -218,3 +221,4 @@ elif opcao == "Painel Administrativo":
     usuarios = cursor.fetchall()
     conn.close()
     st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+

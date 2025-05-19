@@ -25,5 +25,5 @@ def criar_usuario(nome, email, tipo, regiao):
         conn.close()
 
 # Exemplo de uso:
-criar_usuario("Osiel Araujo", "osiel.araujo@ldc.com", "admin", "BA")
+criar_usuario("Osiel Arauj", "osiel.arauj@ldc.com", "admin", "BA")
 

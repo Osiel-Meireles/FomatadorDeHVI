@@ -37,20 +37,23 @@ def processar_pdfs(arquivos, produtor, corretora):
     for arq in arquivos:
         with pdfplumber.open(arq) as pdf:
             dados = []
-            lote = safra = data_hvi = data_plantio = data_colheita = "Desconhecido"
+            lote = safra = data_hvi = "Desconhecido"
+            # inicializa safras e datas
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
-                for ln in txt.split("\n"):
-                    if "Lote:" in ln:
+                for ln in txt.split("
+"):
+                    # Lote
+                    if ln.startswith("Cliente:") and "Lote:" in ln:
                         lote = ln.split("Lote:")[1].strip().split()[0]
-                    if "Safra:" in ln:
+                    # Safra (plantio/colheita anos)
+                    if ln.startswith("Safra:"):
                         safra = ln.split("Safra:")[1].strip().split()[0]
-                    if "Data HVI:" in ln or ("Data:" in ln and "HVI" in ln):
-                        data_hvi = ln.split(":")[1].strip().split()[0]
-                    if "Plantio:" in ln:
-                        data_plantio = ln.split("Plantio:")[1].strip().split()[0]
-                    if "Colheita:" in ln:
-                        data_colheita = ln.split("Colheita:")[1].strip().split()[0]
+                    # Data HVI (data e hora)
+                    if ln.startswith("Fazenda:") and "Data:" in ln:
+                        parts = ln.split("Data:")[1].strip().split()
+                        data_hvi = parts[0]
+                    # Linhas de dados dos fardos
                     if ln.startswith("00.0."):
                         partes = ln.replace(",", ".").split()
                         partes.insert(0, lote)
@@ -61,10 +64,15 @@ def processar_pdfs(arquivos, produtor, corretora):
             "TrCnt", "TrAr", "TrID", "SCI", "CSP"
         ]
         df = pd.DataFrame(dados, columns=colunas)
+        # Se safra no formato YYYY/YYYY, separa anos de plantio e colheita
+        plantio = colheita = ""
+        if "/" in safra:
+            anos = safra.split("/")
+            plantio, colheita = anos[0], anos[1]
         # Adiciona colunas de datas
         df["Data HVI"] = data_hvi
-        df["Plantio"] = data_plantio
-        df["Colheita"] = data_colheita
+        df["Ano Plantio"] = plantio
+        df["Ano Colheita"] = colheita
 
         # Insere no banco
         id_fmt = inserir_formatacao(lote, data_hvi, safra, produtor, None)
@@ -169,4 +177,3 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
-

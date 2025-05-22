@@ -18,8 +18,7 @@ from database import (
     consultar_registros_completos
 )
 
-# Carrega variáveis de ambiente e inicializa o banco
-load_dotenv()
+# Carrega variáveis de ambiente e inicializa o banco\load_dotenv()
 criar_tabelas()
 
 # Sidebar Menu
@@ -31,7 +30,6 @@ if user_type.lower() == "admin":
 opcao = st.sidebar.radio("Ir para:", opcoes)
 
 # Função de processamento de PDFs
-
 def processar_pdfs(arquivos, produtor, corretora):
     df_final = pd.DataFrame()
     for arq in arquivos:
@@ -40,9 +38,7 @@ def processar_pdfs(arquivos, produtor, corretora):
             lote = safra = data_hvi = "Desconhecido"
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
-                # divida corretamente por quebra de linha
-                for ln in txt.split("
-"):
+                for ln in txt.split("\n"):
                     # Lote na linha 'Cliente:' contendo 'Lote:'
                     if ln.startswith("Cliente:") and "Lote:" in ln:
                         lote = ln.split("Lote:")[1].strip().split()[0]
@@ -90,10 +86,10 @@ if opcao == "Processar PDF":
             df_final = processar_pdfs(arquivos, produtor, corretora)
             # Conversões adicionais
             df_final["UHML"] = df_final["UHML_mm"].apply(
-                lambda v: round((float(v)/1000)*39.3701,2) if v.replace('.','',1).isdigit() else "-"
+                lambda v: round((float(v)/1000)*39.3701, 2) if v.replace('.', '', 1).isdigit() else "-"
             )
             df_final["MAT"] = df_final["Mat"].apply(
-                lambda x: int(round(float(x)*100)) if x.replace('.','',1).isdigit() else x
+                lambda x: int(round(float(x)*100)) if x.replace('.', '', 1).isdigit() else x
             )
             df_final["CG"] = df_final["CGrd"].astype(str).str.replace("-", ".")
             df_final["FardoID"] = df_final["FardoID"].str.replace('.', '', regex=False)
@@ -102,9 +98,9 @@ if opcao == "Processar PDF":
             df_final["Produtor"] = produtor
 
             export_cols = [
-                "Lote","FardoID","MIC","UHML","STR","PESO","SFI","UI",
-                "CSP","ELG","Rd","+b","TrID","SCI","MAT","CG",
-                "Produtor","Tipo","Data HVI","Plantio","Colheita"
+                "Lote", "FardoID", "MIC", "UHML", "STR", "PESO", "SFI", "UI",
+                "CSP", "ELG", "Rd", "+b", "TrID", "SCI", "MAT", "CG",
+                "Produtor", "Tipo", "Data HVI", "Ano Plantio", "Ano Colheita"
             ]
             export = df_final[export_cols]
             buffer = BytesIO()
@@ -175,4 +171,5 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+
 

@@ -38,42 +38,41 @@ def processar_pdfs(arquivos, produtor, corretora):
         with pdfplumber.open(arq) as pdf:
             dados = []
             lote = safra = data_hvi = "Desconhecido"
-            # inicializa safras e datas
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
-                for ln in txt.split(""):
-                    # Lote
+                # divida corretamente por quebra de linha
+                for ln in txt.split("
+"):
+                    # Lote na linha 'Cliente:' contendo 'Lote:'
                     if ln.startswith("Cliente:") and "Lote:" in ln:
                         lote = ln.split("Lote:")[1].strip().split()[0]
-                    # Safra (plantio/colheita anos)
-                    if ln.startswith("Safra:"):
+                    # Safra no formato 'YYYY/YYYY'
+                    elif ln.startswith("Safra:"):
                         safra = ln.split("Safra:")[1].strip().split()[0]
-                    # Data HVI (data e hora)
-                    if ln.startswith("Fazenda:") and "Data:" in ln:
-                        parts = ln.split("Data:")[1].strip().split()
-                        data_hvi = parts[0]
-                    # Linhas de dados dos fardos
-                    if ln.startswith("00.0."):
+                    # Data HVI na linha 'Fazenda:' contendo 'Data:'
+                    elif ln.startswith("Fazenda:") and "Data:" in ln:
+                        data_hvi = ln.split("Data:")[1].strip().split()[0]
+                    # Linhas de dados dos fardos começam com '00.0.'
+                    elif ln.startswith("00.0."):
                         partes = ln.replace(",", ".").split()
                         partes.insert(0, lote)
                         dados.append(partes)
+        # nome das colunas dos dados
         colunas = [
             "Lote", "FardoID", "UHML_mm", "UHML_pol", "UI", "SFI",
             "STR", "ELG", "MIC", "Mat", "Rd", "+b", "CGrd",
             "TrCnt", "TrAr", "TrID", "SCI", "CSP"
         ]
         df = pd.DataFrame(dados, columns=colunas)
-        # Se safra no formato YYYY/YYYY, separa anos de plantio e colheita
+        # separa anos de plantio e colheita a partir de safra 'YYYY/YYYY'
         plantio = colheita = ""
         if "/" in safra:
-            anos = safra.split("/")
-            plantio, colheita = anos[0], anos[1]
-        # Adiciona colunas de datas
+            plantio, colheita = safra.split("/")
+        # adiciona colunas de datas e safras
         df["Data HVI"] = data_hvi
         df["Ano Plantio"] = plantio
         df["Ano Colheita"] = colheita
-
-        # Insere no banco
+        # insere no banco
         id_fmt = inserir_formatacao(lote, data_hvi, safra, produtor, None)
         inserir_fardos(id_fmt, df)
         df_final = pd.concat([df_final, df], ignore_index=True)
@@ -176,3 +175,4 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+

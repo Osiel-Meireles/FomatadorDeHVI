@@ -77,10 +77,8 @@ if opcao == "Processar PDF":
         try:
             with pdfplumber.open(arquivos[0]) as pdf0:
                 # extrai todo o texto das páginas
-                texto = "
-".join(page.extract_text() or "" for page in pdf0.pages)
-                for linha in texto.split("
-"):
+                texto = "".join(page.extract_text() or "" for page in pdf0.pages)
+                for linha in texto.split(""):
                     if linha.strip().startswith("Produtor:"):
                         produtor_default = linha.split("Produtor:", 1)[1].strip()
                         break
@@ -94,11 +92,9 @@ if opcao == "Processar PDF":
         with st.spinner("Processando os arquivos..."):
             df_final = processar_pdfs(arquivos, produtor, corretora)
             df_final["UHML"] = df_final["UHML_mm"].apply(
-                lambda v: round((float(v)/1000)*39.3701, 2) if v.replace('.', '', 1).isdigit() else "-"
-            )
+                lambda v: round((float(v)/1000)*39.3701, 2) if v.replace('.', '', 1).isdigit() else "-"            )
             df_final["MAT"] = df_final["Mat"].apply(
-                lambda x: int(round(float(x)*100)) if x.replace('.', '', 1).isdigit() else x
-            )
+                lambda x: int(round(float(x)*100)) if x.replace('.', '', 1).isdigit() else x            )
             df_final["CG"] = df_final["CGrd"].astype(str).str.replace("-", ".")
             df_final["FardoID"] = df_final["FardoID"].str.replace('.', '', regex=False)
             df_final["PESO"] = ""

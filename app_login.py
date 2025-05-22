@@ -77,11 +77,9 @@ if opcao == "Processar PDF":
         try:
             with pdfplumber.open(arquivos[0]) as pdf0:
                 # extrai todo o texto das páginas
-                texto = "
-".join([page.extract_text() or "" for page in pdf0.pages])
+                texto = "".join([page.extract_text() or "" for page in pdf0.pages])
                 # busca linha com 'Produtor:'
-                for linha in texto.split("
-"):
+                for linha in texto.split(""):
                     if linha.strip().startswith("Produtor:"):
                         produtor_default = linha.split("Produtor:", 1)[1].strip()
                         break

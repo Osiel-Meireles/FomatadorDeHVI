@@ -78,7 +78,21 @@ def processar_pdfs(arquivos, produtor, corretora):
 if opcao == "Processar PDF":
     st.subheader("📄 Processar Laudos HVI")
     arquivos = st.file_uploader("Envie os PDFs", type=["pdf"], accept_multiple_files=True)
-    produtor = st.text_input("Nome do produtor")
+    # auto-extract produtor do primeiro PDF, se disponível
+    produtor_default = ""
+    if arquivos:
+        try:
+            with pdfplumber.open(arquivos[0]) as pdf0:
+                txt0 = pdf0.pages[0].extract_text() or ""
+                for ln0 in txt0.split("
+"):
+                    if ln0.startswith("Produtor:"):
+                        produtor_default = ln0.split("Produtor:")[1].strip()
+                        break
+        except Exception:
+            produtor_default = ""
+    produtor = st.text_input("Nome do produtor", value=produtor_default)
+    corretora = st.text_input("Nome da corretora")
     corretora = st.text_input("Nome da corretora")
 
     if arquivos and produtor and corretora:

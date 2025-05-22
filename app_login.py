@@ -76,6 +76,7 @@ if opcao == "Processar PDF":
     if arquivos and len(arquivos) > 0:
         try:
             with pdfplumber.open(arquivos[0]) as pdf0:
+                # extrai todo o texto das páginas
                 texto = "
 ".join(page.extract_text() or "" for page in pdf0.pages)
                 for linha in texto.split("

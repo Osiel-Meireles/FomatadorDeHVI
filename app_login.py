@@ -41,8 +41,7 @@ def processar_pdfs(arquivos, produtor, corretora):
             # inicializa safras e datas
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
-                for ln in txt.split("
-"):
+                for ln in txt.split(""):
                     # Lote
                     if ln.startswith("Cliente:") and "Lote:" in ln:
                         lote = ln.split("Lote:")[1].strip().split()[0]

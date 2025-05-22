@@ -88,6 +88,7 @@ if opcao == "Processar PDF":
             produtor_default = ""
     produtor = st.text_input("Nome do produtor", value=produtor_default)
     corretora = st.text_input("Nome da corretora")
+    corretora = st.text_input("Nome da corretora")
 
     if arquivos and produtor and corretora:
         with st.spinner("Processando os arquivos..."):

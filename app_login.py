@@ -18,13 +18,13 @@ from database import (
     consultar_registros_completos
 )
 
-# Carrega variáveis de ambiente e inicializa o banco\load_dotenv()
+# Carrega variáveis de ambiente e inicializa o banco
+load_dotenv()
 criar_tabelas()
 
 # Sidebar Menu
 st.sidebar.title("Menu")
 opcoes = ["Processar PDF", "Histórico de Formatações"]
-# Exibe opções administrativas se for admin (ajuste conforme permissão desejada)
 user_type = os.getenv("DEFAULT_USER_TYPE", "usuario")
 if user_type.lower() == "admin":
     opcoes += ["Painel Administrativo", "Exportar do Banco"]
@@ -36,13 +36,21 @@ def processar_pdfs(arquivos, produtor, corretora):
     df_final = pd.DataFrame()
     for arq in arquivos:
         with pdfplumber.open(arq) as pdf:
-            dados, lote, safra, data_hvi = [], "Desconhecido", "Desconhecida", "Desconhecida"
+            dados = []
+            lote = safra = data_hvi = data_plantio = data_colheita = "Desconhecido"
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
                 for ln in txt.split("\n"):
-                    if "Lote:" in ln: lote = ln.split("Lote:")[1].strip().split()[0]
-                    if "Safra:" in ln: safra = ln.split("Safra:")[1].strip().split()[0]
-                    if "Data:" in ln: data_hvi = ln.split("Data:")[1].strip().split()[0]
+                    if "Lote:" in ln:
+                        lote = ln.split("Lote:")[1].strip().split()[0]
+                    if "Safra:" in ln:
+                        safra = ln.split("Safra:")[1].strip().split()[0]
+                    if "Data HVI:" in ln or ("Data:" in ln and "HVI" in ln):
+                        data_hvi = ln.split(":")[1].strip().split()[0]
+                    if "Plantio:" in ln:
+                        data_plantio = ln.split("Plantio:")[1].strip().split()[0]
+                    if "Colheita:" in ln:
+                        data_colheita = ln.split("Colheita:")[1].strip().split()[0]
                     if ln.startswith("00.0."):
                         partes = ln.replace(",", ".").split()
                         partes.insert(0, lote)
@@ -53,6 +61,12 @@ def processar_pdfs(arquivos, produtor, corretora):
             "TrCnt", "TrAr", "TrID", "SCI", "CSP"
         ]
         df = pd.DataFrame(dados, columns=colunas)
+        # Adiciona colunas de datas
+        df["Data HVI"] = data_hvi
+        df["Plantio"] = data_plantio
+        df["Colheita"] = data_colheita
+
+        # Insere no banco
         id_fmt = inserir_formatacao(lote, data_hvi, safra, produtor, None)
         inserir_fardos(id_fmt, df)
         df_final = pd.concat([df_final, df], ignore_index=True)
@@ -81,10 +95,12 @@ if opcao == "Processar PDF":
             df_final["Tipo"] = ""
             df_final["Produtor"] = produtor
 
-            export = df_final[[
+            export_cols = [
                 "Lote","FardoID","MIC","UHML","STR","PESO","SFI","UI",
-                "CSP","ELG","Rd","+b","TrID","SCI","MAT","CG","Produtor","Tipo"
-            ]]
+                "CSP","ELG","Rd","+b","TrID","SCI","MAT","CG",
+                "Produtor","Tipo","Data HVI","Plantio","Colheita"
+            ]
+            export = df_final[export_cols]
             buffer = BytesIO()
             export.to_excel(buffer, index=False, engine="openpyxl")
             buffer.seek(0)
@@ -125,7 +141,7 @@ elif opcao == "Painel Administrativo":
             nome = st.text_input("Nome")
             email = st.text_input("Email")
             tipo = st.selectbox("Tipo", ["admin", "usuario"])
-            regiao = st.selectbox("Regi\u00e3o", ["MT", "BA"])
+            regiao = st.selectbox("Região", ["MT", "BA"])
             cadastrar = st.form_submit_button("Cadastrar Usuário")
             if cadastrar:
                 senha_temp = secrets.token_urlsafe(8)

@@ -18,7 +18,8 @@ from database import (
     consultar_registros_completos
 )
 
-# Carrega variáveis de ambiente e inicializa o banco\load_dotenv()
+# Carrega variáveis de ambiente e inicializa o banco
+load_dotenv()
 criar_tabelas()
 
 # Sidebar Menu
@@ -39,36 +40,28 @@ def processar_pdfs(arquivos, produtor, corretora):
             for pg in pdf.pages:
                 txt = pg.extract_text() or ""
                 for ln in txt.split("\n"):
-                    # Lote na linha 'Cliente:' contendo 'Lote:'
                     if ln.startswith("Cliente:") and "Lote:" in ln:
                         lote = ln.split("Lote:")[1].strip().split()[0]
-                    # Safra no formato 'YYYY/YYYY'
                     elif ln.startswith("Safra:"):
                         safra = ln.split("Safra:")[1].strip().split()[0]
-                    # Data HVI na linha 'Fazenda:' contendo 'Data:'
                     elif ln.startswith("Fazenda:") and "Data:" in ln:
                         data_hvi = ln.split("Data:")[1].strip().split()[0]
-                    # Linhas de dados dos fardos começam com '00.0.'
                     elif ln.startswith("00.0."):
                         partes = ln.replace(",", ".").split()
                         partes.insert(0, lote)
                         dados.append(partes)
-        # nome das colunas dos dados
         colunas = [
             "Lote", "FardoID", "UHML_mm", "UHML_pol", "UI", "SFI",
             "STR", "ELG", "MIC", "Mat", "Rd", "+b", "CGrd",
             "TrCnt", "TrAr", "TrID", "SCI", "CSP"
         ]
         df = pd.DataFrame(dados, columns=colunas)
-        # separa anos de plantio e colheita a partir de safra 'YYYY/YYYY'
         plantio = colheita = ""
         if "/" in safra:
             plantio, colheita = safra.split("/")
-        # adiciona colunas de datas e safras
         df["Data HVI"] = data_hvi
         df["Ano Plantio"] = plantio
         df["Ano Colheita"] = colheita
-        # insere no banco
         id_fmt = inserir_formatacao(lote, data_hvi, safra, produtor, None)
         inserir_fardos(id_fmt, df)
         df_final = pd.concat([df_final, df], ignore_index=True)
@@ -78,18 +71,17 @@ def processar_pdfs(arquivos, produtor, corretora):
 if opcao == "Processar PDF":
     st.subheader("📄 Processar Laudos HVI")
     arquivos = st.file_uploader("Envie os PDFs", type=["pdf"], accept_multiple_files=True)
-    # auto-extract produtor do primeiro PDF, se disponível
+    # auto-extract produtor do primeiro PDF
     produtor_default = ""
     if arquivos:
         try:
             with pdfplumber.open(arquivos[0]) as pdf0:
                 txt0 = pdf0.pages[0].extract_text() or ""
-                for ln0 in txt0.split("
-"):
+                for ln0 in txt0.split("\n"):
                     if ln0.startswith("Produtor:"):
                         produtor_default = ln0.split("Produtor:")[1].strip()
                         break
-        except Exception:
+        except:
             produtor_default = ""
     produtor = st.text_input("Nome do produtor", value=produtor_default)
     corretora = st.text_input("Nome da corretora")
@@ -97,7 +89,6 @@ if opcao == "Processar PDF":
     if arquivos and produtor and corretora:
         with st.spinner("Processando os arquivos..."):
             df_final = processar_pdfs(arquivos, produtor, corretora)
-            # Conversões adicionais
             df_final["UHML"] = df_final["UHML_mm"].apply(
                 lambda v: round((float(v)/1000)*39.3701, 2) if v.replace('.', '', 1).isdigit() else "-"
             )
@@ -109,7 +100,6 @@ if opcao == "Processar PDF":
             df_final["PESO"] = ""
             df_final["Tipo"] = ""
             df_final["Produtor"] = produtor
-
             export_cols = [
                 "Lote", "FardoID", "MIC", "UHML", "STR", "PESO", "SFI", "UI",
                 "CSP", "ELG", "Rd", "+b", "TrID", "SCI", "MAT", "CG",
@@ -121,7 +111,9 @@ if opcao == "Processar PDF":
             buffer.seek(0)
             nome = f"Resumo_Oferta_{datetime.now().strftime('%Y-%m-%d')}_{produtor}_{corretora}.xlsx".replace(" ", "_")
             st.download_button("📥 Baixar Excel Consolidado", data=buffer, file_name=nome)
-        st.success("Todos os arquivos foram processados com sucesso!")# Tela: Histórico de Formatações
+        st.success("Todos os arquivos foram processados com sucesso!")
+
+# Tela: Histórico de Formatações
 elif opcao == "Histórico de Formatações":
     st.subheader("📋 Histórico de Formatações")
     dados = listar_formatacoes()
@@ -136,7 +128,6 @@ elif opcao == "Histórico de Formatações":
         fardos = listar_fardos_por_formatacao(escolha)
         st.dataframe(pd.DataFrame(fardos))
 
-# Tela: Exportar do Banco (apenas admin)
 elif opcao == "Exportar do Banco":
     st.subheader("📤 Exportar Dados Salvos")
     df = consultar_registros_completos()
@@ -145,7 +136,6 @@ elif opcao == "Exportar do Banco":
     buffer.seek(0)
     st.download_button("📁 Baixar Excel com Registros", data=buffer, file_name="export_banco.xlsx")
 
-# Tela: Painel Administrativo (apenas admin)
 elif opcao == "Painel Administrativo":
     st.subheader("👤 Painel de Administração")
     with sqlite3.connect("laudos.db") as conn:
@@ -182,6 +172,7 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+
 
 
 

@@ -92,6 +92,7 @@ if opcao == "Processar PDF":
         except Exception:
             produtor_default = ""
     produtor = st.text_input("Nome do produtor", value=produtor_default)
+    corretora = st.text_input("Nome da corretora")("Nome do produtor", value=produtor_default)
     corretora = st.text_input("Nome da corretora")
     corretora = st.text_input("Nome da corretora")
 
@@ -185,5 +186,6 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+
 
 

@@ -84,15 +84,14 @@ if opcao == "Processar PDF":
         try:
             with pdfplumber.open(arquivos[0]) as pdf0:
                 txt0 = pdf0.pages[0].extract_text() or ""
-                for ln0 in txt0.split(""):
+                for ln0 in txt0.split("
+"):
                     if ln0.startswith("Produtor:"):
                         produtor_default = ln0.split("Produtor:")[1].strip()
                         break
         except Exception:
             produtor_default = ""
     produtor = st.text_input("Nome do produtor", value=produtor_default)
-    corretora = st.text_input("Nome da corretora")("Nome do produtor", value=produtor_default)
-    corretora = st.text_input("Nome da corretora")
     corretora = st.text_input("Nome da corretora")
 
     if arquivos and produtor and corretora:
@@ -122,9 +121,7 @@ if opcao == "Processar PDF":
             buffer.seek(0)
             nome = f"Resumo_Oferta_{datetime.now().strftime('%Y-%m-%d')}_{produtor}_{corretora}.xlsx".replace(" ", "_")
             st.download_button("📥 Baixar Excel Consolidado", data=buffer, file_name=nome)
-        st.success("Todos os arquivos foram processados com sucesso!")
-
-# Tela: Histórico de Formatações
+        st.success("Todos os arquivos foram processados com sucesso!")# Tela: Histórico de Formatações
 elif opcao == "Histórico de Formatações":
     st.subheader("📋 Histórico de Formatações")
     dados = listar_formatacoes()
@@ -185,6 +182,7 @@ elif opcao == "Painel Administrativo":
         cursor.execute("SELECT id, nome, email, tipo, regiao FROM usuarios")
         usuarios = cursor.fetchall()
         st.dataframe(pd.DataFrame(usuarios, columns=["ID", "Nome", "Email", "Tipo", "Região"]))
+
 
 
 
